@@ -11,3 +11,6 @@ Company name - Nevixa
 ABOUT COMPANY - An IT company by Machine learning engineer 
 What we do : Make Machine learning models to solve problems
 
+It jsut a readme file nothing else.
+ dont read it 
+
