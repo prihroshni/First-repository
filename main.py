@@ -1,4 +1,3 @@
-dict = {
-"name" : "Prih roshni " , 
-  "age" : "23" ,
-}
+print("hello world")
+print("NEVIXA")
+print("MACHINE LEARNING")
