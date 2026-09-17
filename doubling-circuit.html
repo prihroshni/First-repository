@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Doubling Circuit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #12131c;
+    --bg-2: #191b28;
+    --panel: #1c1e2e;
+    --ring: #363a52;
+    --ring-dim: #2a2c3f;
+    --text: #eae7dd;
+    --muted: #8d90a8;
+    --blue: #5aa4ff;
+    --blue-dim: rgba(90,164,255,0.18);
+    --red: #ff7360;
+    --red-dim: rgba(255,115,96,0.18);
+    --brass: #cbab6d;
+    --line-width: 1px;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    background: radial-gradient(120% 140% at 50% -10%, var(--bg-2) 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    min-height:100%;
+  }
+
+  body{
+    padding: clamp(28px, 6vw, 72px) clamp(18px, 6vw, 48px) 80px;
+  }
+
+  .wrap{
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  header{
+    max-width: 620px;
+    margin: 0 0 clamp(40px, 6vw, 64px);
+  }
+
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4.6vw, 3rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    color: var(--text);
+  }
+
+  header p{
+    font-size: 0.98rem;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 10px;
+    max-width: 56ch;
+  }
+
+  header p strong{
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .circuits{
+    display: flex;
+    gap: clamp(20px, 4vw, 40px);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .panel{
+    background: linear-gradient(180deg, var(--panel), var(--bg));
+    border: 1px solid var(--ring-dim);
+    border-radius: 18px;
+    padding: clamp(20px, 3vw, 32px) clamp(16px, 3vw, 28px) 26px;
+    flex: 1 1 380px;
+    max-width: 460px;
+    min-width: 280px;
+  }
+
+  .panel-head{
+    display:flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  .panel-head h2{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .dot-label{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .swatch{
+    width: 9px; height: 9px; border-radius: 50%;
+    display:inline-block;
+  }
+
+  .panel.a .swatch{ background: var(--blue); box-shadow: 0 0 8px var(--blue); }
+  .panel.b .swatch{ background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+  svg{
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px auto 4px;
+    overflow: visible;
+  }
+
+  .ring{
+    fill: none;
+    stroke: var(--ring);
+    stroke-width: 1;
+  }
+
+  .guide-line{
+    fill: none;
+    stroke-width: 1;
+  }
+
+  .panel.a .guide-line{ stroke: var(--blue-dim); }
+  .panel.b .guide-line{ stroke: var(--red-dim); }
+
+  .node circle{
+    fill: var(--bg-2);
+    stroke: var(--ring);
+    stroke-width: 1.2;
+    transition: stroke 0.25s ease, fill 0.25s ease;
+  }
+
+  .node text{
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    fill: var(--muted);
+    text-anchor: middle;
+    dominant-baseline: central;
+    transition: fill 0.25s ease;
+  }
+
+  .node.lit circle{
+    stroke-width: 1.6;
+  }
+  .panel.a .node.lit circle{ stroke: var(--blue); fill: var(--blue-dim); }
+  .panel.b .node.lit circle{ stroke: var(--red); fill: var(--red-dim); }
+  .node.lit text{ fill: var(--text); }
+
+  .ball{
+    r: 6.5;
+  }
+  .panel.a .ball{ fill: var(--blue); filter: drop-shadow(0 0 6px var(--blue)); }
+  .panel.b .ball{ fill: var(--red); filter: drop-shadow(0 0 6px var(--red)); }
+
+  .sequence{
+    text-align: center;
+    font-size: 0.92rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+    margin-top: 8px;
+  }
+
+  .sequence b{
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  footer{
+    max-width: 620px;
+    margin: clamp(48px, 7vw, 72px) auto 0;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--muted);
+  }
+
+  footer p{ margin: 0 0 10px; }
+
+  @media (prefers-reduced-motion: reduce){
+    .ball{ transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>The Doubling Circuit</h1>
+    <p>Two rings, both numbered 1 through 9. On each, a point of light jumps between six of those numbers on repeat — never touching 3, 6, or 9.</p>
+    <p><strong>Ring A</strong> (blue) runs 1 → 2 → 4 → 8 → 7 → 5 → 1. <strong>Ring B</strong> (red) runs it backward: 1 → 5 → 7 → 8 → 4 → 2 → 1.</p>
+  </header>
+
+  <div class="circuits">
+    <div class="panel a">
+      <div class="panel-head">
+        <h2>Ring A</h2>
+        <div class="dot-label"><span class="swatch"></span>forward</div>
+      </div>
+      <svg id="svg-a" viewBox="0 0 340 340"></svg>
+      <div class="sequence" id="seq-a"></div>
+    </div>
+
+    <div class="panel b">
+      <div class="panel-head">
+        <h2>Ring B</h2>
+        <div class="dot-label"><span class="swatch"></span>reverse</div>
+      </div>
+      <svg id="svg-b" viewBox="0 0 340 340"></svg>
+      <div class="sequence" id="seq-b"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Why 3, 6, and 9 stay dark: the path is what you get from repeatedly doubling 1 and reducing to a single digit (doubling mod 9) — 1, 2, 4, 8, 16→7, 32→5, 64→1 — and that loop never lands on a multiple of 3. Ring B just walks the same six numbers the other way.</p>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const CX = 170, CY = 170, R = 132, NODE_R = 17;
+
+  function pointFor(n){
+    // 1 at top, clockwise, 9 positions evenly spaced
+    const angle = ((n - 1) * 40 - 50) * Math.PI / 180;
+    return { x: CX + R * Math.cos(angle), y: CY + R * Math.sin(angle) };
+  }
+
+  function buildRing(svgEl, sequence){
+    const svgNS = "http://www.w3.org/2000/svg";
+    const ring = document.createElementNS(svgNS, "circle");
+    ring.setAttribute("cx", CX); ring.setAttribute("cy", CY); ring.setAttribute("r", R);
+    ring.setAttribute("class", "ring");
+    svgEl.appendChild(ring);
+
+    // faint guide path connecting the sequence
+    let d = "";
+    sequence.forEach((n, i) => {
+      const p = pointFor(n);
+      d += (i === 0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1) + " ";
+    });
+    const guide = document.createElementNS(svgNS, "path");
+    guide.setAttribute("d", d);
+    guide.setAttribute("class", "guide-line");
+    svgEl.appendChild(guide);
+
+    // nodes 1..9
+    const nodes = {};
+    for (let n = 1; n <= 9; n++){
+      const p = pointFor(n);
+      const g = document.createElementNS(svgNS, "g");
+      g.setAttribute("class", "node");
+      const c = document.createElementNS(svgNS, "circle");
+      c.setAttribute("cx", p.x); c.setAttribute("cy", p.y); c.setAttribute("r", NODE_R);
+      const t = document.createElementNS(svgNS, "text");
+      t.setAttribute("x", p.x); t.setAttribute("y", p.y);
+      t.textContent = n;
+      g.appendChild(c); g.appendChild(t);
+      svgEl.appendChild(g);
+      nodes[n] = g;
+    }
+
+    const ball = document.createElementNS(svgNS, "circle");
+    ball.setAttribute("class", "ball");
+    ball.setAttribute("r", 6.5);
+    const start = pointFor(sequence[0]);
+    ball.setAttribute("cx", start.x);
+    ball.setAttribute("cy", start.y);
+    svgEl.appendChild(ball);
+
+    return { nodes, ball };
+  }
+
+  function easeInOutCubic(t){
+    return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t+2, 3) / 2;
+  }
+
+  function animate(svgEl, sequence, hopMs){
+    const { nodes, ball } = buildRing(svgEl, sequence);
+    const points = sequence.map(pointFor);
+    const segCount = points.length - 1;
+    let litNode = null;
+
+    function frame(ts){
+      const totalElapsed = ts % (hopMs * segCount);
+      const segIndex = Math.min(Math.floor(totalElapsed / hopMs), segCount - 1);
+      const t = easeInOutCubic((totalElapsed - segIndex * hopMs) / hopMs);
+
+      const p0 = points[segIndex], p1 = points[segIndex + 1];
+      const x = p0.x + (p1.x - p0.x) * t;
+      const y = p0.y + (p1.y - p0.y) * t;
+      ball.setAttribute("cx", x);
+      ball.setAttribute("cy", y);
+
+      const currentNum = t < 0.08 ? sequence[segIndex] : (t > 0.92 ? sequence[segIndex + 1] : null);
+      if (currentNum !== null && nodes[currentNum] !== litNode){
+        if (litNode) litNode.classList.remove("lit");
+        litNode = nodes[currentNum];
+        litNode.classList.add("lit");
+      }
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  const seqA = [1,2,4,8,7,5,1];
+  const seqB = [1,5,7,8,4,2,1];
+
+  animate(document.getElementById("svg-a"), seqA, 850);
+  animate(document.getElementById("svg-b"), seqB, 850);
+
+  document.getElementById("seq-a").innerHTML = "<b>" + seqA.slice(0,-1).join(" → ") + " → </b>repeat";
+  document.getElementById("seq-b").innerHTML = "<b>" + seqB.slice(0,-1).join(" → ") + " → </b>repeat";
+})();
+</script>
+</body>
+</html>
